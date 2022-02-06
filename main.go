@@ -2,7 +2,6 @@ package DS18B20
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/joho/godotenv"
 	"log"
 	"math"
