@@ -1,4 +1,4 @@
-module adrkakol/pi/DS18B20
+module github.com/adrkakol/ds18b20-go
 
 go 1.17
 
