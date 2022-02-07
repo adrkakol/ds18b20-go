@@ -1,8 +1,11 @@
+// This package supports 1-wire temperature sensor DS18B20.
+// Package dedicated to Raspberry Pi devices.
+//
+// This program reads data from 1-wire termometer.
 package DS18B20
 
 import (
 	"bufio"
-	"github.com/joho/godotenv"
 	"log"
 	"math"
 	"os"
@@ -11,11 +14,36 @@ import (
 	"strings"
 )
 
+// DS18B20 represents the temperature sensor.
+//
+// Firstly, create an instance of DS18B20.
+// Secondly, call Init method with the address of your sensor.
+// After these steps you can use GetTemperature method to read the temperature from the sensor.
+//
+// ds := DS18B20.Init("28-01020304")
+//
+// ds.GetTemperature() // result: 18.9
+//
 type DS18B20 struct {
+	address  string
+	filePath string
+}
+
+// initialize
+func Init(address string) *DS18B20 {
+	ds := new(DS18B20)
+	ds.address = address
+	ds.setSensorFilePath()
+
+	return ds
+}
+
+func (ds *DS18B20) setSensorFilePath() {
+	ds.filePath = "/sys/bus/w1/devices/" + ds.address + "/w1_slave"
 }
 
 func (ds *DS18B20) GetTemperature() float64 {
-	var temperature string = getTemperatureFromFile(getSensorFilePath())
+	var temperature string = ds.getTemperatureFromFile()
 	var comaIndex int = len(temperature) - 3
 	var temperatureFixed string = temperature[:comaIndex] + "." + temperature[comaIndex:]
 	parsed, err := strconv.ParseFloat(temperatureFixed, 64)
@@ -25,17 +53,10 @@ func (ds *DS18B20) GetTemperature() float64 {
 	return math.Round(parsed*100) / 100
 }
 
-func getSensorFilePath() string {
-	godotenv.Load(".env")
-
-	var sensorAddress = os.Getenv("SENSOR_ADDRESS")
-	return "/sys/bus/w1/devices/" + sensorAddress + "/w1_slave"
-}
-
-func getTemperatureFromFile(filePath string) string {
+func (ds *DS18B20) getTemperatureFromFile() string {
 	var measuredTemperature string
 
-	file, err := os.Open(filePath)
+	file, err := os.Open(ds.filePath)
 
 	if err != nil {
 		log.Fatal(err)

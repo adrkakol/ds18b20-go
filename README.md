@@ -1,15 +1,30 @@
-# Description
+# Package DS18B20
 
-This program fetches data from 1-wire termometer..
+```go
+import "github.com/adrkakol/ds18b20-go"
+```
+
+This package supports 1-wire temperature sensor DS18B20.
+Package dedicated to Raspberry Pi devices.
+
+This program reads data from 1-wire termometer.
 
 
-## What devices does it support?
-
-* Raspberry Pi
-* DS18B20 - temperature sensor - 1-wire bus
+## Usage
 
 
-# Running this program
+DS18B20 represents the temperature sensor.
+
+Firstly, create an instance of DS18B20 by calling Init method with the address of your sensor.
+Next you can use GetTemperature method to read the temperature from the sensor.
+ 
+```go
+ds := DS18B20.Init("28-01020304")
+ds.GetTemperature() // result: 18.9
+```
+
+
+# Configuration of your Raspberry Pi
 
 ## Enable 1-wire bus
 
@@ -63,24 +78,6 @@ less /sys/bus/w1/devices/28-01195240e3ff/w1_slave
 
 If you can't find a w1_slave, it means you haven't set the 1-wire bus properly or your device is not correctly connected.
 You can try rebooting or checking if the connection is correct or maybe you haven't set up the pullup option or gave incorrect pin number.
-
-## Configuration files
-
-1. Copy .ent.template to .env file.
-1. Set the address name of your sensor:
-```
-SENSOR_ADDRESS=28-01195240e3ff
-```
-
-# USAGE
-
-```go
-func main() {
-	sensor := new(DS18B20)
-	temp := sensor.GetTemperature()
-	fmt.Printf("temp: %s", temp)
-}
-```
 
 # Building for raspberry
 
