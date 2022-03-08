@@ -1,12 +1,14 @@
+// Author: Adrian Kąkol
+
 // This package supports 1-wire temperature sensor DS18B20.
 // Package dedicated to Raspberry Pi devices.
 //
-// This program reads data from 1-wire termometer.
+// This program reads data from 1-wire thermometer.
 package DS18B20
 
 import (
 	"bufio"
-	"log"
+	"errors"
 	"math"
 	"os"
 	"regexp"
@@ -14,7 +16,7 @@ import (
 	"strings"
 )
 
-// DS18B20 represents the temperature sensor.
+// DS18B20 struct represents the temperature sensor.
 //
 // Firstly, create an instance of DS18B20.
 // Secondly, call Init method with the address of your sensor.
@@ -22,7 +24,7 @@ import (
 //
 // ds := DS18B20.Init("28-01020304")
 //
-// ds.GetTemperature() // result: 18.9
+// temperature, err := ds.GetTemperature() // result: (18.9, nil) orr (0, error)
 //
 type DS18B20 struct {
 	address  string
@@ -42,24 +44,32 @@ func (ds *DS18B20) setSensorFilePath() {
 	ds.filePath = "/sys/bus/w1/devices/" + ds.address + "/w1_slave"
 }
 
-func (ds *DS18B20) GetTemperature() float64 {
-	var temperature string = ds.getTemperatureFromFile()
+func (ds *DS18B20) GetTemperature() (float64, error) {
+	temperature, err := ds.getTemperatureFromFile()
+
+	if err != nil {
+		return 0, err
+	}
+
 	var comaIndex int = len(temperature) - 3
 	var temperatureFixed string = temperature[:comaIndex] + "." + temperature[comaIndex:]
+
 	parsed, err := strconv.ParseFloat(temperatureFixed, 64)
+
 	if err != nil {
-		log.Fatal("Cannot parse float")
+		return 0, errors.New("Unable to parse temperature.")
 	}
-	return math.Round(parsed*100) / 100
+
+	return math.Round(parsed*100) / 100, nil
 }
 
-func (ds *DS18B20) getTemperatureFromFile() string {
+func (ds *DS18B20) getTemperatureFromFile() (string, error) {
 	var measuredTemperature string
 
 	file, err := os.Open(ds.filePath)
 
 	if err != nil {
-		log.Fatal(err)
+		return "", errors.New("Failed to read the temperature. Cannot open the file.")
 	}
 	defer file.Close()
 
@@ -77,12 +87,12 @@ func (ds *DS18B20) getTemperatureFromFile() string {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		return "", errors.New("Failed to read the temperature. Cannot read the file.")
 	}
 
 	if len(measuredTemperature) < 1 {
-		log.Fatal("Unable to read temperature")
+		return "", errors.New("Failed to read the temperature. Cannot parse the file.")
 	}
 
-	return measuredTemperature
+	return measuredTemperature, nil
 }
